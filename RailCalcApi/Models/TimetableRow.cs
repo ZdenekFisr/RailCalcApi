@@ -24,8 +24,8 @@
             _stationName = dto.StationName;
             _arrival = dto.Arrival.ToString();
             _departure = dto.Departure.ToString();
-            _travelTime = dto.TravelTime.ToString();
-            _energyConsumption = dto.EnergyConsumption;
+            _travelTime = new TimeSpan((long)dto.TravelTime * 10000).ToString();
+            _energyConsumption = (float)dto.EnergyConsumption;
             _averageSpeed = dto.AverageSpeed;
         }
     }

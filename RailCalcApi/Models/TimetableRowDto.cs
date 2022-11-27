@@ -6,8 +6,8 @@
         public string StationName { get; set; }
         public TimeOnly? Arrival { get; set; }
         public TimeOnly? Departure { get; set; }
-        public TimeSpan? TravelTime { get; set; }
-        public float EnergyConsumption { get; set; }
+        public double TravelTime { get; set; }
+        public double EnergyConsumption { get; set; }
         public float AverageSpeed { get; set; }
     }
 }

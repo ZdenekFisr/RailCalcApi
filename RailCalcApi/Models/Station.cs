@@ -8,5 +8,10 @@ namespace RailCalcApi.Models
         [Required]
         public string Name { get; set; }
         public float? Altitude { get; set; }
+
+        public override string ToString()
+        {
+            return Name;
+        }
     }
 }

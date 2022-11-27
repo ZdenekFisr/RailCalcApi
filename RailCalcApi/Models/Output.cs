@@ -16,7 +16,7 @@
         public float AverageSpeed { get => _averageSpeed; }
         public float AverageTravelSpeed { get => _averageTravelSpeed; }
 
-        public Output(IEnumerable<TimetableRowDto> timetableDto, float maxSpeed)
+        public Output(IEnumerable<TimetableRowDto> timetableDto, TimeSpan timeOfStandingInStations, float maxSpeed)
         {
             _timetable = new();
             _totalTime = new TimeSpan(0);
@@ -24,9 +24,9 @@
             foreach (TimetableRowDto timetableRowDto in timetableDto)
             {
                 _timetable.Add(new TimetableRow(timetableRowDto));
-                if (timetableRowDto.TravelTime != null) _totalTime.Add((TimeSpan)timetableRowDto.TravelTime);
             }
-            _totalEnergyConsumption = timetableDto.Sum(x => x.EnergyConsumption);
+            _totalTime = new TimeSpan(timetableDto.Sum(s => (long)s.TravelTime)) + (_timetable.Count - 1) * timeOfStandingInStations;
+            _totalEnergyConsumption = timetableDto.Sum(s => (float)s.EnergyConsumption);
             _maxSpeed = maxSpeed;
         }
     }

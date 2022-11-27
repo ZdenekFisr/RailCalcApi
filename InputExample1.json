@@ -1,0 +1,76 @@
+{
+  "railRoute": {
+    "stations": [
+      {
+        "position": 0,
+        "name": "Jeníkov-Oldřichov",
+        "altitude": 249
+      },{
+        "position": 2.3,
+        "name": "Háj u Duchcova",
+        "altitude": 242
+      },{
+        "position": 3.4,
+        "name": "Osek",
+        "altitude": 245
+      },{
+        "position": 7.3,
+        "name": "Lom u Mostu",
+        "altitude": 291
+      },{
+        "position": 9.6,
+        "name": "Louka u Litvínova",
+        "altitude": 302
+      },{
+        "position": 11.2,
+        "name": "Litvínov",
+        "altitude": 303
+      }
+    ],
+    "speed": 100,
+    "speedSections": [
+      {
+        "from": 2.3,
+        "to": 2.5,
+        "value": 90
+      },{
+        "from": 4.1,
+        "to": 5.5,
+        "value": 95
+      },{
+        "from": 5.5,
+        "to": 6.9,
+        "value": 90
+      },{
+        "from": 6.9,
+        "to": 8.7,
+        "value": 85
+      },{
+        "from": 8.7,
+        "to": 10.2,
+        "value": 50
+      },{
+        "from": 10.2,
+        "to": 11.2,
+        "value": 80
+      }
+    ]
+  },
+  "train": {
+    "weight": 186.5,
+    "maxSpeed": 140,
+    "adhesionWeight": 84.5,
+    "massEquivalentToRotatingParts": 25,
+    "resistanceConstant": 1.5,
+    "resistanceLinear": 0,
+    "resistanceQuadratic": 0.0003,
+    "performance": 3480,
+    "maxPullForce": 258,
+    "efficiency": 0.7
+  },
+  "adhesionLimit": 0.3,
+  "brakesDeceleration": 0.45,
+  "initialTime": "12:00:00",
+  "timeOfStandingInStations": "0:00:30",
+  "reversedDirectionOfTravel": false
+}
