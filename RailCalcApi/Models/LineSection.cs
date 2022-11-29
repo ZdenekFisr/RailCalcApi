@@ -2,8 +2,8 @@
 {
     public class LineSection
     {
-        public float From { get; set; }
-        public float To { get; set; }
-        public float Value { get; set; }
+        public double From { get; set; }
+        public double To { get; set; }
+        public double Value { get; set; }
     }
 }

@@ -2,7 +2,7 @@
 {
     public class Segment
     {
-        public float Position { get; set; }
+        public double Position { get; set; }
         public double Km { get; set; }
         public double Incline { get; set; }
         public double InclineResistance { get; set; }

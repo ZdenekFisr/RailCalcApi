@@ -4,10 +4,10 @@ namespace RailCalcApi.Models
 {
     public class Station
     {
-        public float Position { get; set; }
+        public double Position { get; set; }
         [Required]
         public string Name { get; set; }
-        public float? Altitude { get; set; }
+        public double? Altitude { get; set; }
 
         public override string ToString()
         {

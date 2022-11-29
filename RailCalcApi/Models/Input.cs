@@ -9,13 +9,13 @@
         /// 
         /// Recommended values: 0.3 to 0.35 (lower when rails are slippery)
         /// </summary>
-        public float AdhesionLimit { get; set; }
+        public double AdhesionLimit { get; set; }
         /// <summary>
         /// Deceleration in m/s^2 when the train is braking
         /// 
         /// Recommended values: 0.45 to 0.7
         /// </summary>
-        public float BrakesDeceleration { get; set; }
+        public double BrakesDeceleration { get; set; }
         /// <summary>
         /// Format h:mm:ss
         /// </summary>

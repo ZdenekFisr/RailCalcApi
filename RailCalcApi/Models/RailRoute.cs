@@ -11,7 +11,7 @@
         public List<LineSection> SpeedSections { get; set; } = new();
 
         // Readonly properties
-        public float Length { get => Math.Abs(Stations.Last().Position - Stations.First().Position); }
+        public double Length { get => Math.Abs(Stations.Last().Position - Stations.First().Position); }
 
     }
 }

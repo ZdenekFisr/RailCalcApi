@@ -47,7 +47,7 @@
         "value": 85
       },{
         "from": 8.7,
-        "to": 10.2,
+        "to": 9.8,
         "value": 50
       },{
         "from": 10.2,
@@ -61,7 +61,7 @@
     "maxSpeed": 140,
     "adhesionWeight": 84.5,
     "massEquivalentToRotatingParts": 25,
-    "resistanceConstant": 1.5,
+    "resistanceConstant": 1.8, 
     "resistanceLinear": 0,
     "resistanceQuadratic": 0.0003,
     "performance": 3480,

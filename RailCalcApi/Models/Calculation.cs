@@ -4,36 +4,32 @@ namespace RailCalcApi.Models
 {
     public class Calculation
     {
-        private const float segmentLength = 0.01F;
+        private const double segmentLength = 0.01;
         private const double gravAcceleration = 9.81;
 
-        public static Output Execute(Input input)
+        public static Output Execute(InputDto input)
         {
             List<TimetableRowDto> timetableDto = new();
-
-            input.RailRoute.Stations.Sort((s1, s2) => s1.Position.CompareTo(s2.Position));
 
             Segment[] segments = new Segment[(int)(input.RailRoute.Length / segmentLength) + 1];
 
             List<LineSection> longitudalProfile = new();
 
-            if (!TimeOnly.TryParse(input.InitialTime, out TimeOnly initialTime)) throw new InvalidDataException("Initial time is not in correct format. The correct format is 'h:mm:ss'.");
-            if (!TimeSpan.TryParse(input.TimeOfStandingInStations, out TimeSpan timeOfStandingInStations)) throw new InvalidDataException("Time of standing in stations is not in correct format. The correct format is 'h:mm:ss'.");
             #region Preprocessing
 
             // create segment array (i. e. numerical table)
-            float km, previousPosition;
+            double km, previousPosition;
             int directionFactor = input.ReversedDirectionOfTravel ? -1 : 1;
 
             previousPosition = input.ReversedDirectionOfTravel ? input.RailRoute.Stations.Last().Position : input.RailRoute.Stations.First().Position;
             for (int i = 0; i < segments.Length; i++)
             {
-                km = i * segmentLength;
+                km = Math.Round(i * segmentLength, 3);
                 segments[i] = new Segment { Position = previousPosition + directionFactor * km, Km = km };
             }
 
             // calculate altitude profile
-            float x, y = 0, positionX, positionY = 0;
+            double x, y = 0, positionX, positionY = 0;
             int count = 0;
             foreach (Station station in input.RailRoute.Stations)
             {
@@ -41,9 +37,9 @@ namespace RailCalcApi.Models
                 if (count != 2) count++;
                 x = y;
                 positionX = positionY;
-                y = (float)station.Altitude;
+                y = (double)station.Altitude;
                 positionY = station.Position;
-                if (count == 2) longitudalProfile.Add(new LineSection { From = positionX, To = positionY, Value = (float)Math.Round((y - x) / (positionY - positionX), 2) });
+                if (count == 2) longitudalProfile.Add(new LineSection { From = positionX, To = positionY, Value = Math.Round((y - x) / (positionY - positionX), 2) });
             }
 
             // assign constants
@@ -60,16 +56,15 @@ namespace RailCalcApi.Models
                 if (incline != null) segments[i].Incline = incline.Value;
 
                 // incline resistance
-                segments[i].InclineResistance = input.Train.Weight * gravAcceleration * segments[i].Incline;
+                segments[i].InclineResistance = input.Train.Weight * gravAcceleration * segments[i].Incline / 1000;
             }
 
             #endregion
 
-            #region Processing
+            #region Deceleration profile
 
             double speedMs = 0, speedKmh;
 
-            // deceleration profile (down)
             for (int i = segments.Length - 1; i >= 0; i--)
             {
                 if (input.RailRoute.Stations.Exists(s => s.Position == segments[i].Position)) speedMs = 0;
@@ -89,14 +84,17 @@ namespace RailCalcApi.Models
                 }
             }
 
-            // acceleration profile (up), final profile
+            #endregion
+
+            #region Acceleration profile, final profile
+
             speedMs = 0;
             speedKmh = 0;
-            double acceleration, actualAcceleration, totalTime = 0, totalWork = 0, previousTime = 0, previousWork = 0,
+            double acceleration, actualAcceleration, totalTime = 0, totalEnergy = 0, previousTime = 0, previousEnergy = 0,
                 wheelForce, adhesionForce = input.Train.AdhesionWeight * gravAcceleration * input.AdhesionLimit;
             Station? currentStation;
 
-            timetableDto.Add(new() { StationName = input.RailRoute.Stations.First().ToString(), Departure = initialTime });
+            timetableDto.Add(new() { StationName = input.RailRoute.Stations.First().ToString(), Departure = input.InitialTime });
 
             for (int i = 0; i < segments.Length; i++)
             {
@@ -107,7 +105,7 @@ namespace RailCalcApi.Models
                 segments[i].SpeedUp = speedKmh;
                 segments[i].Speed = Math.Min(segments[i].SpeedDown, segments[i].SpeedUp);
 
-                segments[i].TrainResistance = (input.Train.ResistanceConstant + input.Train.ResistanceLinear * segments[i].Speed + input.Train.ResistanceQuadratic * segments[i].Speed * segments[i].Speed) / 1000;
+                segments[i].TrainResistance = (input.Train.ResistanceConstant + input.Train.ResistanceLinear * segments[i].Speed + input.Train.ResistanceQuadratic * segments[i].Speed * segments[i].Speed) * input.Train.Weight * gravAcceleration / 1000;
 
                 wheelForce = Math.Min(adhesionForce, Math.Min(input.Train.MaxPullForce, input.Train.Performance / speedMs));
                 
@@ -123,7 +121,7 @@ namespace RailCalcApi.Models
                 }
 
                 // final acceleration
-                if ((segments[i].SpeedUp == 0 && segments[i].SpeedDown == 0) || segments[i].SpeedUp > segments[i].SpeedDown) segments[i].Acceleration = acceleration; // train is standing in a station or accelerating
+                if ((segments[i].SpeedUp == 0 && segments[i].SpeedDown == 0) || segments[i].SpeedUp < segments[i].SpeedDown) segments[i].Acceleration = acceleration; // train is standing in a station or accelerating
                 else if (segments[i].SpeedUp == segments[i].SpeedDown) segments[i].Acceleration = 0; // constant speed equal to allowed speed
                 else segments[i].Acceleration = segments[i].AccelerationDown; // train is decelerating
 
@@ -137,36 +135,34 @@ namespace RailCalcApi.Models
                     segments[i].Time = (actualAcceleration == 0) ? segmentLength * 1000 / (segments[i].Speed / 3.6) : (segments[i].Speed / 3.6 - segments[i - 1].Speed / 3.6) / actualAcceleration;
                     totalTime += segments[i].Time;
                     if (segments[i - 1].PullForce > 0) segments[i].Work = segments[i - 1].PullForce * segmentLength * 1000000;
-                    totalWork += segments[i].Work;
+                    totalEnergy += segments[i].Work;
                 }
 
                 // add timetable row
                 if (i != 0 && currentStation is not null)
                 {
-                    TimeOnly? departure = i != segments.Length ? initialTime.AddMinutes((totalTime + timeOfStandingInStations.TotalSeconds) / 60) : null;
+                    TimeOnly? departure = i != segments.Length - 1 ? input.InitialTime.AddMinutes((totalTime + input.TimeOfStandingInStations.TotalSeconds) / 60) : null;
                     timetableDto.Add(new()
                     {
                         StationPosition = segments[i].Position,
                         StationName = currentStation.ToString(),
-                        Arrival = initialTime.AddMinutes(totalTime / 60),
+                        Arrival = input.InitialTime.AddMinutes(totalTime / 60),
                         Departure = departure,
                         TravelTime = totalTime - previousTime,
-                        EnergyConsumption = totalWork - previousWork,
-                        AverageSpeed = Math.Abs(segments[i].Position - previousPosition) / (float)(totalTime - previousTime)
+                        EnergyConsumption = Math.Round(totalEnergy / (input.Train.Efficiency * 3600000) - previousEnergy, 2),
+                        AverageSpeed = Math.Round(Math.Abs(segments[i].Position - previousPosition) * 3600 / (totalTime - previousTime), 2)
                     });
-                    totalTime += timeOfStandingInStations.TotalSeconds;
+                    totalTime += input.TimeOfStandingInStations.TotalSeconds;
                     previousTime = totalTime;
-                    previousWork = totalWork;
+                    previousEnergy = totalEnergy / (input.Train.Efficiency * 3600000);
                 }
             }
 
-            #endregion
-
-            #region Postprocessing
+            totalEnergy /= input.Train.Efficiency * 3600000;
 
             #endregion
 
-            return new Output(timetableDto, timeOfStandingInStations, segments.Max(s => (float)s.Speed));
+            return new Output(timetableDto, totalTime, totalEnergy, input.RailRoute.Length, input.TimeOfStandingInStations, segments.Max(s => s.Speed));
         }
     }
 }
